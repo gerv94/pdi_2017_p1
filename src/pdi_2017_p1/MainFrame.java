@@ -16,6 +16,8 @@ public class MainFrame extends JFrame {
 	Matriz matriz;
 
 	public MainFrame() {
+		initializeComponents();
+
 		ma = new double[2][2];
 		mb = new double[2][2];
 		mc = new double[2][2];
@@ -23,12 +25,18 @@ public class MainFrame extends JFrame {
 		mc[0][1] = 0;
 		mc[1][0] = 0;
 		mc[1][1] = 0;
+	}
 
+	private void initializeComponents() {
+		setTitle("Procesamiento de imagenes - Practica 1");
 		setSize(500, 500);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
 	}
 
 	public static void main(String[] args) {
-		new MainFrame().setVisible(true);
+		//new MainFrame().setVisible(true);
+		double[][] m = Matriz.getMatrixFromText("[1.0,2.2,3.3][4,5,6][7,8,9.0]");
+		System.out.println(Matriz.getStringFromMatrix(m));
 	}
 }

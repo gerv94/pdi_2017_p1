@@ -6,8 +6,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Matriz {
+	public static final String ADDITION = "+";
+	public static final String SUBSTRACTION = "-";
+	public static final String MULTIPLICATION = "x";
+	public static final String DIVISION = "/";
+	
+	public static double[][] addition(double[][] ma, double[][] mb) {
+		double [][] res = ma;
+		res[0][0] += mb[0][0];
+		res[0][1] += mb[0][1];
+		res[1][0] += mb[1][0];
+		res[1][1] += mb[1][1];
+		return res;
+	}
+	
+	public static double[][] substraction(double[][] ma, double[][] mb) {
+		double [][] res = ma;
+		res[0][0] -= mb[0][0];
+		res[0][1] -= mb[0][1];
+		res[1][0] -= mb[1][0];
+		res[1][1] -= mb[1][1];
+		return res;
+	}
 
-	public static double[][] proucto(double[][] ma, double[][] mb) {
+	public static double[][] multiplication(double[][] ma, double[][] mb) {
 		int aRows = ma.length;
 		int aColumns = ma[0].length;
 		int bRows = mb.length;
@@ -27,8 +49,36 @@ public class Matriz {
 					mc[i][j] += ma[i][k] * mb[k][j];
 		return mc;
 	}
+	
+	public static double[][] multiplication(double[][] ma, double d) {
+		double[][] res = ma;
+		res[0][0] *= -d;
+		res[0][1] *= -d;
+		res[1][0] *= -d;
+		res[1][1] *= -d;
+		return res;
+	}
+	
+	public static double[][] division(double[][] ma, double[][] mb) {
+		return multiplication(ma, inverse(mb));
+	}
 
-	public static double[][] getMatrixFromText(String string) throws IllegalArgumentException{
+	public static double[][] inverse(double[][] m) {
+		double[][] res = m;
+		if (res.length != 2 || res[0].length != 2)
+			throw new IllegalArgumentException("Inverse is only supported for 2x2 matrices.");
+
+		double temp;
+		double div = 1 / (res[0][0] * res[1][1] - res[0][1] * res[1][0]);
+		temp = res[0][0];
+		res[0][0] = div * res[1][1];
+		res[1][1] = div * temp;
+		res[0][1] *= -div;
+		res[1][0] *= -div;
+		return res;
+	}
+
+	public static double[][] getMatrixFromText(String string) throws IllegalArgumentException {
 		Pattern pattern = Pattern.compile("\\[(\\d+(.\\d+)?(,\\d+(.\\d+)?)*)\\]");
 		Matcher matcher = pattern.matcher(string);
 		List<String[]> matches = new ArrayList<>();
@@ -53,18 +103,21 @@ public class Matriz {
 		for (int row = 0; row < matches.size(); row++)
 			for (int column = 0; column < columns; column++)
 				res[row][column] = Double.valueOf(matches.get(row)[column]);
-		
+
 		return res;
 	}
 
 	public static String getStringFromMatrix(double[][] m) {
 		String res = "";
-		for (int row = 0; row < m.length; row++) {
+		boolean comma;
+		for(double[] row : m) {
 			res += "[";
-			for (int column = 0; column < m[row].length; column++) {
-				if (column > 0)
+			comma = false;
+			for(double val : row) {
+				if(comma)
 					res += ",";
-				res += m[row][column];
+				res += val;
+				comma = true;
 			}
 			res += "]";
 		}

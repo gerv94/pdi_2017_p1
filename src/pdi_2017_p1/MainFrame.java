@@ -11,26 +11,32 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class MainFrame extends JFrame implements ActionListener, MouseListener, MouseMotionListener {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1589158397755057732L;
+
+	private static final String OPEN_FILE = "of";
+	private static final String OPEN_FILE_HALF = "of_half";
+	private static final String ROTATE_FIRST_QUADRANT = "rotate_first_cuadrant";
+	private static final String MIRROR_VERTICAL = "mirror_vertical";
+	private static final String MIRROR_HORIZONTAL = "mirror_horizontal";
+
+	private static final String TITLE = "Procesamiento de imagenes - Practica 1";
 
 	private JTextField txtMa00;
 	private JTextField txtMa01;
@@ -46,16 +52,17 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 	private JTextField txtMc11;
 
 	private JLabel lblPixel;
-	private	JLabel lblR;
-	private	JLabel lblG;
-	private	JLabel lblB;
+	private JLabel lblR;
+	private JLabel lblG;
+	private JLabel lblB;
 	private JLabel lblSatR;
 	private JLabel lblSatG;
 	private JLabel lblSatB;
 	private JLabel pixelColor;
 
-	private JLabel guiImg;
-	private BufferedImage img;
+	private ImagePDI guiImg;
+
+	private JFileChooser fileChooser;
 
 	Matriz matriz;
 
@@ -64,8 +71,8 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 	}
 
 	private void initializeComponents() {
-		setTitle("Procesamiento de imagenes - Practica 1");
-		setSize(600, 500);
+		setTitle(TITLE);
+		setSize(1100, 700);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		int txtColumns = 6;
@@ -91,6 +98,7 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 		txtMc11.setEditable(false);
 		txtMc00.setColumns(txtColumns);
 
+		// Setting north controls
 		JButton btnAddition = new JButton(Matriz.ADDITION);
 		JButton btnSubstraction = new JButton(Matriz.SUBSTRACTION);
 		JButton btnMultiplication = new JButton(Matriz.MULTIPLICATION);
@@ -103,9 +111,6 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 		btnSubstraction.setActionCommand(Matriz.SUBSTRACTION);
 		btnMultiplication.setActionCommand(Matriz.MULTIPLICATION);
 		btnDivision.setActionCommand(Matriz.DIVISION);
-
-		JPanel pnlNorth = new JPanel();
-		pnlNorth.setLayout(new FlowLayout());
 
 		JPanel pnlMa = new JPanel();
 		pnlMa.setLayout(new GridLayout(2, 2));
@@ -137,18 +142,24 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 
 		JLabel lblEq = new JLabel("=");
 
+		JPanel pnlNorth = new JPanel();
+		pnlNorth.setLayout(new FlowLayout());
 		pnlNorth.add(pnlMa);
 		pnlNorth.add(pnlOper);
 		pnlNorth.add(pnlMb);
 		pnlNorth.add(lblEq);
 		pnlNorth.add(pnlMc);
 
-		guiImg = new JLabel();
+		// Setting center controls
+		guiImg = new ImagePDI();
 		guiImg.setOpaque(true);
 		guiImg.setBackground(Color.WHITE);
 		guiImg.addMouseListener(this);
 		guiImg.addMouseMotionListener(this);
-		
+
+		JScrollPane pnlCenter = new JScrollPane(guiImg);
+
+		// Setting west controls
 		pixelColor = new JLabel("                                        ");
 		lblPixel = new JLabel("0000,0000");
 		lblR = new JLabel("-------");
@@ -172,25 +183,18 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 		lblSatR.setAlignmentX(Component.CENTER_ALIGNMENT);
 		lblSatG.setAlignmentX(Component.CENTER_ALIGNMENT);
 		lblSatB.setAlignmentX(Component.CENTER_ALIGNMENT);
-		String testImg = "/home/german/Pictures/dog.jpg";
-		displayImage(testImg);
-
-		JPanel pnlWest = new JPanel() {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
-
-			@Override
-            public Dimension getMaximumSize() {
-                return getPreferredSize();
-            }
-		};
-		pnlWest.setLayout(new BoxLayout(pnlWest, BoxLayout.PAGE_AXIS));
-
 		pixelColor.setOpaque(true);
 		pixelColor.setBackground(Color.WHITE);
 
+		JPanel pnlWest = new JPanel() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Dimension getMaximumSize() {
+				return getPreferredSize();
+			}
+		};
+		pnlWest.setLayout(new BoxLayout(pnlWest, BoxLayout.PAGE_AXIS));
 		pnlWest.add(pixelColor);
 		pnlWest.add(lblPixel);
 		pnlWest.add(lblR);
@@ -204,34 +208,70 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 		pnlWest.add(lblSB);
 		pnlWest.add(lblSatB);
 
-		JPanel pnlCenter = new JPanel() {
-			/**
-			 * 
-			 */
-			private static final long serialVersionUID = 1L;
+		// Setting south controls
+		JButton btnOpenFile = new JButton("Change image file");
+		btnOpenFile.setActionCommand(OPEN_FILE);
+		btnOpenFile.addActionListener(this);
 
-			@Override
-            public Dimension getMaximumSize() {
-                return getPreferredSize();
-            }
-		};
-		pnlCenter.setLayout(new BoxLayout(pnlCenter, BoxLayout.PAGE_AXIS));
-		pnlCenter.add(guiImg);
-		
+		JButton btnOpenFileToHalf = new JButton("Add image to half");
+		btnOpenFileToHalf.setActionCommand(OPEN_FILE_HALF);
+		btnOpenFileToHalf.addActionListener(this);
+
+		JButton btnRotateFirstQuadrant = new JButton("Rotate first quadrant");
+		btnRotateFirstQuadrant.setActionCommand(ROTATE_FIRST_QUADRANT);
+		btnRotateFirstQuadrant.addActionListener(this);
+
+		JButton btnMirrorVertical = new JButton("Mirror vertical");
+		btnMirrorVertical.setActionCommand(MIRROR_VERTICAL);
+		btnMirrorVertical.addActionListener(this);
+
+		JButton btnMirrorHorizontal = new JButton("Mirror horizontal");
+		btnMirrorHorizontal.setActionCommand(MIRROR_HORIZONTAL);
+		btnMirrorHorizontal.addActionListener(this);
+
+		JPanel pnlSouth = new JPanel();
+		pnlSouth.setLayout(new FlowLayout());
+		pnlSouth.add(btnOpenFile);
+		pnlSouth.add(btnOpenFileToHalf);
+		pnlSouth.add(btnRotateFirstQuadrant);
+		pnlSouth.add(btnMirrorVertical);
+		pnlSouth.add(btnMirrorHorizontal);
+
+		// Adding panels
 		setLayout(new BorderLayout());
 		add(pnlNorth, BorderLayout.NORTH);
 		add(pnlWest, BorderLayout.WEST);
 		add(pnlCenter, BorderLayout.CENTER);
+		add(pnlSouth, BorderLayout.SOUTH);
+
+		FileFilter imageFilter = new FileNameExtensionFilter("Image files", ImageIO.getReaderFileSuffixes());
+		fileChooser = new JFileChooser();
+		fileChooser.addChoosableFileFilter(imageFilter);
+		fileChooser.setAcceptAllFileFilterUsed(false);
+
+		displayImage("/home/german/Pictures/dog.jpg");
 	}
 
 	private void displayImage(String str) {
+		displayImage(new File(str));
+	}
+
+	private void displayImage(File f) {
 		try {
-			img = ImageIO.read(new File(str));
-			double[] res = ImagePDI.getSaturation(img);
+			guiImg.setImage(ImageIO.read(f));
+			double[] res = guiImg.getSaturation();
 			lblSatR.setText(String.valueOf(res[0]));
 			lblSatG.setText(String.valueOf(res[1]));
 			lblSatB.setText(String.valueOf(res[2]));
-			guiImg.setIcon(new ImageIcon(img));
+			setTitle(TITLE + " : " + f.getName());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void addImageToHalf(File f) {
+		try {
+			guiImg.addImageAtFirstQuadrant(ImageIO.read(f));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -264,7 +304,7 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 
 	private void showPixel(int x, int y) {
 		try {
-			Color c = new Color(img.getRGB(x, y));
+			Color c = new Color(guiImg.getRGB(x, y));
 			pixelColor.setBackground(c);
 			lblPixel.setText(String.valueOf(x) + "," + String.valueOf(y));
 			lblR.setText("R: " + String.valueOf(c.getRed()));
@@ -289,6 +329,23 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 		case Matriz.DIVISION:
 			showResult(Matriz.division(getMatrixA(), getMatrixB()));
 			break;
+		case OPEN_FILE:
+			if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
+				displayImage(fileChooser.getSelectedFile());
+			break;
+		case OPEN_FILE_HALF:
+			if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
+				addImageToHalf(fileChooser.getSelectedFile());
+			break;
+		case ROTATE_FIRST_QUADRANT:
+			guiImg.rotateFirstQuadrant();
+			break;
+		case MIRROR_VERTICAL:
+			guiImg.mirrorVertical();
+			break;
+		case MIRROR_HORIZONTAL:
+			guiImg.mirrorHorizontal();
+			break;
 		default:
 			break;
 		}
@@ -302,31 +359,26 @@ public class MainFrame extends JFrame implements ActionListener, MouseListener, 
 	@Override
 	public void mouseEntered(MouseEvent e) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void mousePressed(MouseEvent e) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
